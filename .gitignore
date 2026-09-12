@@ -1,6 +1,6 @@
 venv/
-data/
-model/
+#data/
+#model/
 output/
 __pycache__/
 *.pyc
