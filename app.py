@@ -98,39 +98,132 @@ def generate_music(model, mappings, all_events, num_notes, temperature):
 
 
 # ---------------- UI ----------------
-st.set_page_config(page_title="AI Music Generator", page_icon="🎵")
+st.set_page_config(page_title="AI Music Generator", page_icon="🎵", layout="centered")
 
-st.title("🎵 AI Music Generator")
+# --- Custom styling ---
 st.markdown(
     """
-    An LSTM neural network trained on Bach chorales, generating new original music.
-    Click **Generate Music** to create a fresh sequence every time.
-    """
+    <style>
+    .main-header {
+        text-align: center;
+        padding: 1.5rem 0 0.5rem 0;
+    }
+    .main-header h1 {
+        font-size: 2.6rem;
+        background: linear-gradient(90deg, #a855f7, #ec4899, #f97316);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.2rem;
+    }
+    .main-header p {
+        color: #b0b0c0;
+        font-size: 1.05rem;
+    }
+    div.stButton > button {
+        width: 100%;
+        border-radius: 12px;
+        padding: 0.7rem 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        background: linear-gradient(90deg, #a855f7, #ec4899);
+        border: none;
+        transition: transform 0.15s ease;
+    }
+    div.stButton > button:hover {
+        transform: scale(1.02);
+        border: none;
+    }
+    .info-card {
+        background-color: #1a1a2e;
+        border: 1px solid #33334d;
+        border-radius: 14px;
+        padding: 1.2rem 1.4rem;
+        margin-top: 1rem;
+    }
+    .stats-row {
+        display: flex;
+        justify-content: space-around;
+        text-align: center;
+        margin: 1rem 0;
+    }
+    .stat-box {
+        background-color: #1a1a2e;
+        border-radius: 12px;
+        padding: 0.8rem 1rem;
+        flex: 1;
+        margin: 0 0.3rem;
+    }
+    .stat-box h3 {
+        margin: 0;
+        color: #a855f7;
+        font-size: 1.4rem;
+    }
+    .stat-box p {
+        margin: 0;
+        color: #9090a5;
+        font-size: 0.8rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
-with st.spinner("Loading model..."):
+st.markdown(
+    """
+    <div class="main-header">
+        <h1>🎵 AI Music Generator</h1>
+        <p>A neural network trained on Bach chorales — composing original music, one note at a time.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+with st.spinner("🎼 Warming up the neural network..."):
     model, mappings, all_events = load_everything()
 
+st.markdown(
+    f"""
+    <div class="stats-row">
+        <div class="stat-box"><h3>{mappings['vocab_size']}</h3><p>Unique notes/chords</p></div>
+        <div class="stat-box"><h3>{mappings['seq_length']}</h3><p>Context window</p></div>
+        <div class="stat-box"><h3>LSTM</h3><p>Architecture</p></div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.write("")
 col1, col2 = st.columns(2)
 with col1:
-    num_notes = st.slider("Number of notes/chords to generate", 50, 400, 200, step=10)
+    num_notes = st.slider("🎹 Number of notes/chords", 50, 400, 200, step=10)
 with col2:
-    temperature = st.slider("Temperature (creativity)", 0.3, 1.5, 1.0, step=0.1)
+    temperature = st.slider("🔥 Creativity (temperature)", 0.3, 1.5, 1.0, step=0.1)
 
-if st.button("🎶 Generate Music", type="primary"):
-    with st.spinner("Generating..."):
+st.write("")
+generate_clicked = st.button("🎶 Generate Music")
+
+if generate_clicked:
+    with st.spinner("Composing your track..."):
         audio, midi_path = generate_music(model, mappings, all_events, num_notes, temperature)
 
+    st.success("Your music is ready! 🎉")
     st.audio(audio, sample_rate=22050)
 
     with open(midi_path, "rb") as f:
         st.download_button("⬇️ Download MIDI file", f, file_name="generated_music.mid")
 
+    st.balloons()
+
 st.markdown(
     """
-    ---
-    **How it works:** A 2-layer stacked LSTM (256 units) was trained to predict the next
-    note/chord given the previous 40, using Bach chorales as training data (via `music21`).
-    Generation is autoregressive — each predicted note is fed back in to predict the next one.
-    """
+    <div class="info-card">
+    <b>🧠 How it works</b><br>
+    A 2-layer stacked LSTM (256 units each) was trained to predict the next note/chord
+    given the previous 40, using Bach chorales as training data (via <code>music21</code>).
+    Generation is <b>autoregressive</b> — each predicted note is fed back into the model
+    to predict the next one, and the <b>temperature</b> slider controls how bold vs.
+    predictable the sampling is.
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
